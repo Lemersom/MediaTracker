@@ -4,6 +4,7 @@ import com.example.mediatracker.dto.MediaItemRecordDto;
 import com.example.mediatracker.model.MediaItemModel;
 import com.example.mediatracker.service.MediaItemService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,30 +26,25 @@ public class MediaItemController {
     @GetMapping
     public ResponseEntity<List<MediaItemModel>> findAll(@RequestParam(name = "page", defaultValue = "0") Integer page,
                                                         @RequestParam(name = "size", defaultValue = "20") Integer size) {
-//        Pageable pageable = PageRequest.of(page, size);
-//        Page<MediaItemModel> mediaItemsListPage = mediaItemRepository.findAll(pageable);
-//        if(!mediaItemsListPage.isEmpty()) {
-//            for(MediaItemModel mediaItem : mediaItemsListPage) {
-//                Long id = mediaItem.getId();
-//                mediaItem.add(linkTo(methodOn(MediaItemController.class).findById(id)).withSelfRel());
-//            }
-//        }
         List<MediaItemModel> mediaItemListPage = mediaItemService.findAllMediaItem(page, size);
-        return ResponseEntity.ok(mediaItemListPage);
+        return ResponseEntity.status(HttpStatus.OK).body(mediaItemListPage);
     }
 
     @GetMapping("/{requestedId}")
     public ResponseEntity<Object> findById(@PathVariable Long requestedId) {
-//        Optional<MediaItemModel> mediaItem = mediaItemRepository.findById(requestedId);
-//        if(mediaItem.isEmpty()) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        mediaItem.get().add(linkTo(methodOn(MediaItemController.class).findAll(0, 20)).withRel("MediaItemsList"));
         Optional<MediaItemModel> mediaItem = mediaItemService.findMediaItemById(requestedId);
         if(mediaItem.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        return ResponseEntity.ok(mediaItem.get());
+        return ResponseEntity.status(HttpStatus.OK).body(mediaItem.get());
+    }
+
+    @GetMapping("/media-type/{mediaTypeId}")
+    public ResponseEntity<List<MediaItemModel>> findAllWithMediaTypeId(@PathVariable Long mediaTypeId,
+                                                                       @RequestParam(name = "page", defaultValue = "0") Integer page,
+                                                                       @RequestParam(name = "size", defaultValue = "20") Integer size) {
+        List<MediaItemModel> mediaItemListPage = mediaItemService.findAllWithMediaTypeId(mediaTypeId, page, size);
+        return ResponseEntity.status(HttpStatus.OK).body(mediaItemListPage);
     }
 
     @PostMapping
@@ -60,37 +56,25 @@ public class MediaItemController {
                 .path("media-item/{id}")
                 .buildAndExpand(savedMediaItem.getId())
                 .toUri();
-        return ResponseEntity.created(locationOfNewMediaItem).build();
+        return ResponseEntity.status(HttpStatus.CREATED).location(locationOfNewMediaItem).build();
     }
 
     @PutMapping("/{requestedId}")
     public ResponseEntity<Void> updateMediaItem(@PathVariable Long requestedId,
                                            @RequestBody @Valid MediaItemRecordDto mediaItemRecordDto) {
-//        Optional<MediaItemModel> mediaItem = mediaItemRepository.findById(requestedId);
-//        if(mediaItem.isEmpty()) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        MediaItemModel mediaItemToUpdate = mediaItem.get();
-//        BeanUtils.copyProperties(mediaItemRecordDto, mediaItemToUpdate);
-//        mediaItemRepository.save(mediaItemToUpdate);
         if(mediaItemService.updateMediaItem(requestedId, mediaItemRecordDto)) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
     @DeleteMapping("/{requestedId}")
     public ResponseEntity<Void> deleteMediaItem(@PathVariable Long requestedId) {
-//        Optional<MediaItemModel> mediaItemToDelete = mediaItemRepository.findById(requestedId);
-//        if(mediaItemToDelete.isEmpty()) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        mediaItemRepository.delete(mediaItemToDelete.get());
         if(mediaItemService.deleteMediaItem(requestedId)) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 

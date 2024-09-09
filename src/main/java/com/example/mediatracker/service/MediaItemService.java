@@ -45,6 +45,7 @@ public class MediaItemService {
                 mediaItem.add(linkTo(methodOn(MediaItemController.class).findById(id)).withSelfRel());
             }
         }
+
         return mediaItemsListPage.getContent();
     }
 
@@ -54,7 +55,21 @@ public class MediaItemService {
             return Optional.empty();
         }
         mediaItem.get().add(linkTo(methodOn(MediaItemController.class).findAll(0, 20)).withRel("MediaItemsList"));
+
         return mediaItem;
+    }
+
+    public List<MediaItemModel> findAllWithMediaTypeId(Long mediaTypeId, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MediaItemModel> mediaItemsListPage = mediaItemRepository.findByMediaType_Id(mediaTypeId, pageable);
+        if(!mediaItemsListPage.isEmpty()) {
+            for(MediaItemModel mediaItem : mediaItemsListPage) {
+                Long id = mediaItem.getId();
+                mediaItem.add(linkTo(methodOn(MediaItemController.class).findById(id)).withSelfRel());
+            }
+        }
+
+        return mediaItemsListPage.getContent();
     }
 
     public MediaItemModel saveMediaItem(MediaItemRecordDto mediaItemRecordDto) {
@@ -81,13 +96,13 @@ public class MediaItemService {
     }
 
     public boolean updateMediaItem(Long requestedId, MediaItemRecordDto mediaItemRecordDto) {
-        Optional<MediaItemModel> mediaItem = mediaItemRepository.findById(requestedId);
-        if(mediaItem.isEmpty()) {
+        Optional<MediaItemModel> mediaItemToUpdate = mediaItemRepository.findById(requestedId);
+        if(mediaItemToUpdate.isEmpty()) {
             return false;
         }
-        MediaItemModel mediaItemToUpdate = mediaItem.get();
-        BeanUtils.copyProperties(mediaItemRecordDto, mediaItemToUpdate);
-        mediaItemRepository.save(mediaItemToUpdate);
+        BeanUtils.copyProperties(mediaItemRecordDto, mediaItemToUpdate.get());
+        mediaItemRepository.save(mediaItemToUpdate.get());
+
         return true;
     }
 
@@ -97,6 +112,7 @@ public class MediaItemService {
             return false;
         }
         mediaItemRepository.delete(mediaItemToDelete.get());
+
         return true;
     }
 

@@ -1,6 +1,7 @@
 package com.example.mediatracker;
 
 import com.example.mediatracker.dto.MediaItemRecordDto;
+import com.example.mediatracker.dto.MediaTypeRecordDto;
 import com.example.mediatracker.enums.MediaStatus;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -24,6 +25,8 @@ class MediaTrackerApplicationTests {
 
 	@Autowired
 	TestRestTemplate restTemplate;
+
+	// ---------- Media Item Tests ----------
 
 	@Test
 	void shouldReturnOneMediaItem() {
@@ -70,6 +73,17 @@ class MediaTrackerApplicationTests {
 		DocumentContext documentContext = JsonPath.parse(response.getBody());
 		int mediaItemCount = documentContext.read("$.length()");
 		assertThat(mediaItemCount).isEqualTo(3);
+	}
+
+	@Test
+	void shouldReturnAllMediaItemWithGivenMediaTypeId() {
+		ResponseEntity<String> response = restTemplate
+				.getForEntity("/media-item/media-type/99", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int mediaItemCount = documentContext.read("$.length()");
+		assertThat(mediaItemCount).isEqualTo(2);
 	}
 
 	@Test
@@ -204,6 +218,115 @@ class MediaTrackerApplicationTests {
 	void shouldNotDeleteAMediaItemThatDoesNotExist() {
 		ResponseEntity<Void> deleteResponse = restTemplate
 				.exchange("/media-item/99999", HttpMethod.DELETE, null, Void.class);
+		assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	}
+
+
+	// ---------- Media Type Tests ----------
+
+
+	@Test
+	void shouldReturnOneMediaType() {
+		ResponseEntity<String> response = restTemplate
+				.getForEntity("/media-type/99", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+
+		Number id = documentContext.read("$.id");
+		assertThat(id).isEqualTo(99);
+
+		String name = documentContext.read("$.name");
+		assertThat(name).isEqualTo("Game");
+	}
+
+	@Test
+	void shouldReturnAllMediaType() {
+		ResponseEntity<String> response = restTemplate
+				.getForEntity("/media-type", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int mediaTypeCount = documentContext.read("$.length()");
+		assertThat(mediaTypeCount).isEqualTo(3);
+	}
+
+	@Test
+	@DirtiesContext
+	void shouldSaveANewMediaType() {
+		MediaTypeRecordDto newMediaTypeDto = new MediaTypeRecordDto("Book");
+		ResponseEntity<Void> createResponse = restTemplate
+				.postForEntity("/media-type", newMediaTypeDto, Void.class);
+		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+		URI locationOfNewMediaType = createResponse.getHeaders().getLocation();
+		ResponseEntity<String> getResponse = restTemplate
+				.getForEntity(locationOfNewMediaType, String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+
+		Number id = documentContext.read("$.id");
+		assertThat(id).isNotNull();
+
+		String name = documentContext.read("$.name");
+		assertThat(name).isEqualTo("Book");
+	}
+
+	@Test
+	@DirtiesContext
+	void shouldUpdateAnExistingMediaType() {
+		MediaTypeRecordDto mediaTypeRecordUpdate = new MediaTypeRecordDto("Movies and Series");
+		HttpEntity<MediaTypeRecordDto> request = new HttpEntity<>(mediaTypeRecordUpdate);
+		ResponseEntity<Void> updateResponse = restTemplate
+				.exchange("/media-type/88", HttpMethod.PUT, request, Void.class);
+		assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+		ResponseEntity<String> getResponse = restTemplate
+				.getForEntity("/media-type/88", String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+
+		Number id = documentContext.read("$.id");
+		assertThat(id).isNotNull();
+
+		String name = documentContext.read("$.name");
+		assertThat(name).isEqualTo("Movies and Series");
+	}
+
+	@Test
+	void shouldNotUpdateAMediaTypeThatDoesNotExist() {
+		MediaTypeRecordDto unknownMediaType = new MediaTypeRecordDto("Unknown");
+		HttpEntity<MediaTypeRecordDto> request = new HttpEntity<>(unknownMediaType);
+		ResponseEntity<Void> updateResponse = restTemplate
+				.exchange("/media-type/99999", HttpMethod.PUT, request, Void.class);
+		assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	}
+
+	@Test
+	@DirtiesContext
+	void shouldDeleteAnExistingMediaTypeWithNoMediaItem() {
+		ResponseEntity<Void> deleteResponse = restTemplate
+				.exchange("/media-type/77", HttpMethod.DELETE, null, Void.class);
+		assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+		ResponseEntity<String> getResponse = restTemplate
+				.getForEntity("/media-type/77", String.class);
+		assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	}
+
+	@Test
+	void shouldNotDeleteAnExistingMediaTypeWithAnyMediaItem() {
+		ResponseEntity<Void> deleteResponse = restTemplate
+				.exchange("/media-type/88", HttpMethod.DELETE, null, Void.class);
+		assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	}
+
+	@Test
+	void shouldNotDeleteAMediaTypeThatDoesNotExist() {
+		ResponseEntity<Void> deleteResponse = restTemplate
+				.exchange("/media-type/99999", HttpMethod.DELETE, null, Void.class);
 		assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 	}
 

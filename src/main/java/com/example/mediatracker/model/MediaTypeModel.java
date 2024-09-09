@@ -1,15 +1,17 @@
 package com.example.mediatracker.model;
 
 import jakarta.persistence.*;
+import org.springframework.hateoas.RepresentationModel;
 
 @Entity
 @Table(name = "media_type")
-public class MediaTypeModel {
+public class MediaTypeModel extends RepresentationModel<MediaTypeModel> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
     public MediaTypeModel() {}

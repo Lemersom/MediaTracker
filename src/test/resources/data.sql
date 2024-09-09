@@ -4,6 +4,9 @@ VALUES (99, 'Game');
 INSERT INTO media_type(ID, NAME)
 VALUES (88, 'Movie');
 
+INSERT INTO media_type(ID, NAME)
+VALUES (77, 'Visual Novel');
+
 INSERT INTO media_item(ID, TITLE, RATING, START_DATE, FINISH_DATE, STATUS, MEDIA_TYPE_ID, NOTES)
 VALUES (11, 'Baldurs Gate 3', null, '2023-11-15', null, 'IN_PROGRESS', 99, null);
 
