@@ -2,6 +2,7 @@ package com.example.mediatracker.service;
 
 import com.example.mediatracker.controller.MediaTypeController;
 import com.example.mediatracker.dto.MediaTypeRecordDto;
+import com.example.mediatracker.exception.ResourceNotFoundException;
 import com.example.mediatracker.model.MediaTypeModel;
 import com.example.mediatracker.repository.MediaItemRepository;
 import com.example.mediatracker.repository.MediaTypeRepository;
@@ -89,7 +90,7 @@ public class MediaTypeService {
     public boolean deleteMediaType(Long requestedId) {
         Pageable pageable = PageRequest.of(0, 1);
         if(!mediaItemRepository.findByMediaType_Id(requestedId, pageable).isEmpty()) {
-            return false;
+            throw new ResourceNotFoundException("Cannot delete media type with ID " + requestedId + " because it is associated with one or more media items.");
         }
 
         Optional<MediaTypeModel> mediaTypeToDelete = mediaTypeRepository.findById(requestedId);

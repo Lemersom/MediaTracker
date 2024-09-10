@@ -100,7 +100,16 @@ public class MediaItemService {
         if(mediaItemToUpdate.isEmpty()) {
             return false;
         }
+
+        Optional<MediaTypeModel> mediaType = mediaTypeRepository.findById(mediaItemRecordDto.mediaTypeId());
+        if (mediaType.isEmpty()) {
+            throw new ResourceNotFoundException("Invalid media type id: " + mediaItemRecordDto.mediaTypeId());
+        }
+
         BeanUtils.copyProperties(mediaItemRecordDto, mediaItemToUpdate.get());
+
+        mediaItemToUpdate.get().setMediaType(mediaType.get());
+
         mediaItemRepository.save(mediaItemToUpdate.get());
 
         return true;
