@@ -1,9 +1,12 @@
 package com.example.mediatracker.controller;
 
 import com.example.mediatracker.dto.MediaItemRecordDto;
+import com.example.mediatracker.enums.MediaStatus;
 import com.example.mediatracker.model.MediaItemModel;
 import com.example.mediatracker.service.MediaItemService;
+import com.example.mediatracker.specification.MediaItemSpecification;
 import jakarta.validation.Valid;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +27,29 @@ public class MediaItemController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MediaItemModel>> findAll(@RequestParam(name = "page", defaultValue = "0") Integer page,
+    public ResponseEntity<List<MediaItemModel>> findAll(@RequestParam(required = false) String title,
+                                                        @RequestParam(required = false) Integer rating,
+                                                        @RequestParam(required = false) MediaStatus status,
+                                                        @RequestParam(required = false) Long mediaTypeId,
+                                                        @RequestParam(name = "page", defaultValue = "0") Integer page,
                                                         @RequestParam(name = "size", defaultValue = "20") Integer size) {
-        List<MediaItemModel> mediaItemListPage = mediaItemService.findAllMediaItem(page, size);
+
+        Specification<MediaItemModel> spec = Specification.where(null);
+
+        if(title != null && !title.isEmpty()) {
+            spec = spec.and(MediaItemSpecification.hasTitleContaining(title));
+        }
+        if(rating != null) {
+            spec = spec.and(MediaItemSpecification.hasRating(rating));
+        }
+        if(status != null) {
+            spec = spec.and(MediaItemSpecification.hasStatus(status));
+        }
+        if(mediaTypeId != null) {
+            spec = spec.and(MediaItemSpecification.hasMediaTypeId(mediaTypeId));
+        }
+
+        List<MediaItemModel> mediaItemListPage = mediaItemService.findAllMediaItem(spec, page, size);
         return ResponseEntity.status(HttpStatus.OK).body(mediaItemListPage);
     }
 
@@ -37,14 +60,6 @@ public class MediaItemController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.status(HttpStatus.OK).body(mediaItem.get());
-    }
-
-    @GetMapping("/media-type/{mediaTypeId}")
-    public ResponseEntity<List<MediaItemModel>> findAllWithMediaTypeId(@PathVariable Long mediaTypeId,
-                                                                       @RequestParam(name = "page", defaultValue = "0") Integer page,
-                                                                       @RequestParam(name = "size", defaultValue = "20") Integer size) {
-        List<MediaItemModel> mediaItemListPage = mediaItemService.findAllWithMediaTypeId(mediaTypeId, page, size);
-        return ResponseEntity.status(HttpStatus.OK).body(mediaItemListPage);
     }
 
     @PostMapping

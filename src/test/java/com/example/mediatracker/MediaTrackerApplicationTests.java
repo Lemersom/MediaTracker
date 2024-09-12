@@ -61,7 +61,7 @@ class MediaTrackerApplicationTests {
 		assertThat(mediaTypeName).isEqualTo("Game");
 
 		String notes = documentContext.read("$.notes");
-		assertThat(notes).isEqualTo("GREAT");
+		assertThat(notes).isNull();
 	}
 
 	@Test
@@ -72,13 +72,57 @@ class MediaTrackerApplicationTests {
 
 		DocumentContext documentContext = JsonPath.parse(response.getBody());
 		int mediaItemCount = documentContext.read("$.length()");
+		assertThat(mediaItemCount).isEqualTo(4);
+	}
+
+	@Test
+	void shouldReturnAllMediaItemContainingTitle() {
+		ResponseEntity<String> response = restTemplate
+				.getForEntity("/media-item?title=portal", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int mediaItemCount = documentContext.read("$.length()");
+		assertThat(mediaItemCount).isEqualTo(2);
+	}
+
+	@Test
+	void shouldReturnAllMediaItemWithGivenRating() {
+		ResponseEntity<String> response = restTemplate
+				.getForEntity("/media-item?rating=10", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int mediaItemCount = documentContext.read("$.length()");
 		assertThat(mediaItemCount).isEqualTo(3);
+	}
+
+	@Test
+	void shouldReturnAllMediaItemWithGivenStatus() {
+		ResponseEntity<String> response = restTemplate
+				.getForEntity("/media-item?status=IN_PROGRESS", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int mediaItemCount = documentContext.read("$.length()");
+		assertThat(mediaItemCount).isEqualTo(1);
 	}
 
 	@Test
 	void shouldReturnAllMediaItemWithGivenMediaTypeId() {
 		ResponseEntity<String> response = restTemplate
-				.getForEntity("/media-item/media-type/99", String.class);
+				.getForEntity("/media-item?mediaTypeId=99", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int mediaItemCount = documentContext.read("$.length()");
+		assertThat(mediaItemCount).isEqualTo(3);
+	}
+
+	@Test
+	void shouldReturnAllMediaItemWithGivenTitleRatingStatusMediaTypeId() {
+		ResponseEntity<String> response = restTemplate
+				.getForEntity("/media-item?title=portal&rating=10&status=COMPLETED&mediaTypeId=99", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
 		DocumentContext documentContext = JsonPath.parse(response.getBody());

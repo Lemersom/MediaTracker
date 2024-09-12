@@ -14,6 +14,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,9 +37,9 @@ public class MediaItemService {
         this.validator = validator;
     }
 
-    public List<MediaItemModel> findAllMediaItem(Integer page, Integer size) {
+    public List<MediaItemModel> findAllMediaItem(Specification<MediaItemModel> spec, Integer page, Integer size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<MediaItemModel> mediaItemsListPage = mediaItemRepository.findAll(pageable);
+        Page<MediaItemModel> mediaItemsListPage = mediaItemRepository.findAll(spec, pageable);
         if(!mediaItemsListPage.isEmpty()) {
             for(MediaItemModel mediaItem : mediaItemsListPage) {
                 Long id = mediaItem.getId();
@@ -54,22 +55,9 @@ public class MediaItemService {
         if(mediaItem.isEmpty()) {
             return Optional.empty();
         }
-        mediaItem.get().add(linkTo(methodOn(MediaItemController.class).findAll(0, 20)).withRel("MediaItemsList"));
+        mediaItem.get().add(linkTo(methodOn(MediaItemController.class).findAll(null, null, null, null, 0, 20)).withRel("MediaItemsList"));
 
         return mediaItem;
-    }
-
-    public List<MediaItemModel> findAllWithMediaTypeId(Long mediaTypeId, Integer page, Integer size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<MediaItemModel> mediaItemsListPage = mediaItemRepository.findByMediaType_Id(mediaTypeId, pageable);
-        if(!mediaItemsListPage.isEmpty()) {
-            for(MediaItemModel mediaItem : mediaItemsListPage) {
-                Long id = mediaItem.getId();
-                mediaItem.add(linkTo(methodOn(MediaItemController.class).findById(id)).withSelfRel());
-            }
-        }
-
-        return mediaItemsListPage.getContent();
     }
 
     public MediaItemModel saveMediaItem(MediaItemRecordDto mediaItemRecordDto) {
